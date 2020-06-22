@@ -1,18 +1,32 @@
-#!/bin/sh
+#!/bin/bash
 
-set -e
-setopt EXTENDED_GLOB
+# Up from scripts dir
+cd ..
 
-export INSTALL_DIR=${INSTALL_DIR:-$HOME}
-export DOTFILES_DIR=${DOTFILES_DIR:-$HOME/.dotfiles}
+dotfilesDir=${dotfilesDir:-$HOME/dotfiles}
 
-echo "Linking the rest of the dotfiles..."
-for FILE in $DOTFILES_DIR/(.??*)(.N); do
-  local TARGET=$INSTALL_DIR/${FILE:t}
-  if [[ ! -a $INSTALL_DIR/${FILE:t} ]]; then
-    print -P -- "  %F{002}Linking file:%f $FILE => $TARGET"
-    ln -s $FILE $INSTALL_DIR/${FILE:t}
-  else
-    print -P -- "  %F{011}Link already exists:%f $FILE => $TARGET"
+function linkDotfile {
+  dest="${HOME}/${1}"
+  dateStr=$(date +%Y-%m-%d-%H%M)
+
+  if [ -h ~/${1} ]; then
+    # Existing symlink
+    echo "Removing existing symlink: ${dest}"
+    rm ${dest}
+
+  elif [ -f "${dest}" ]; then
+    # Existing file
+    echo "Backing up existing file: ${dest}"
+    mv ${dest}{,.${dateStr}}
+
+  elif [ -d "${dest}" ]; then
+    # Existing dir
+    echo "Backing up existing dir: ${dest}"
+    mv ${dest}{,.${dateStr}}
   fi
-done
+
+  echo "Creating new symlink: ${dest}"
+  ln -s ${dotfilesDir}/${1} ${dest}
+}
+
+linkDotfile .bashrc
